@@ -1,0 +1,3 @@
+
+# Ignore gems built in this folder
+*.gem
