@@ -207,9 +207,13 @@ module Poloniex
     # Returns the past 200 trades for a given market, or up to 50,000
     # trades between a range specified in UNIX timestamps by the "start" and
     # "end" parameters.
-    # TODO Add retry decorator
+    #
+    # FIXME: Why is this performing it's own GET? Can this use self.call()?
     def market_trade_hist(currency_pair, _start: false, _end: false)
-      args =  { "command" => 'returnTradeHistory', "currencyPair" => currency_pair.to_s.upcase }
+      args =  {
+          "command" => 'returnTradeHistory',
+          "currencyPair" => currency_pair.to_s.upcase
+      }
       if _start
         args['start'] = _start
       end
@@ -220,7 +224,7 @@ module Poloniex
       url.query = URI.encode_www_form(args)
       ret = _get(url.to_s, timeout: self.timeout)
 
-      self.handle_returned(ret.text)
+      self.handle_returned(ret)
     end
 
     # Returns candlestick chart data. Parameters are "currencyPair",
@@ -235,16 +239,18 @@ module Poloniex
       end
 
       unless _start
-        _start = time - self.DAY
+        _start = time - DAY
       end
       unless _end
         _end = time
       end
-      self.call('returnChartData', {
-          'currencyPair' => currencyPair.to_s.upcase,
+      args = {
+          'currencyPair' => currency_pair.to_s.upcase,
           'period' => period.to_s,
-          '_start' => _start.to_s,
-          '_end' => _end.to_s })
+          'start' => _start.to_s,
+          'end' => _end.to_s
+      }
+      self.call('returnChartData', args)
     end
 
     # Returns information about all currencies.
@@ -291,7 +297,7 @@ module Poloniex
     #  given as UNIX timestamps. (defaults to 1 month)
     def return_deposits_withdrawals(_start = false, _end = false)
       unless _start
-        _start = time - self.MONTH
+        _start = time - MONTH
       end
       unless _end
         _end = time
@@ -612,7 +618,8 @@ module Poloniex
     # Gets the current time as float
     #   example: 1503853685.5080986
     def time
-      Time.now.to_f
+      #Time.now.to_f
+      Time.now.to_i
     end
 
     # TODO utilize path and port
