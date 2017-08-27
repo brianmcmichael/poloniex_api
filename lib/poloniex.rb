@@ -4,8 +4,13 @@
 
 require 'poloniex/exceptions'
 
+require 'net/http'
+require 'json'
 require 'logger'
 require 'uri'
+require 'mime/types'
+require 'openssl'
+require 'Base64'
 
 LOGGER = Logger.new(STDOUT)
 
@@ -17,6 +22,10 @@ PUBLIC_COMMANDS = %w(returnTicker return24hVolume returnOrderBook marketTradeHis
 PRIVATE_COMMANDS = %w(returnBalances returnCompleteBalances returnDepositAddresses generateNewAddress returnDepositsWithdrawals returnOpenOrders returnTradeHistory returnAvailableAccountBalances returnTradableBalances returnOpenLoanOffers returnOrderTrades returnActiveLoans returnLendingHistory createLoanOffer cancelLoanOffer toggleAutoRenew buy sell cancelOrder moveOrder withdraw returnFeeInfo transferBalance returnMarginAccountSummary marginBuy marginSell getMarginPosition closeMarginPosition)
 
 PUBLIC_API_BASE = 'https://poloniex.com/public?'
+PRIVATE_API_BASE = 'https://poloniex.com/tradingApi'
+
+UTF_8 = 'utf-8'
+SHA512 = 'sha512'
 
 # The Poloniex Object
 class Poloniex
@@ -67,6 +76,64 @@ class Poloniex
     end
   end
 
+  # """ Main Api Function
+  #   - encodes and sends <command> with optional [args] to Poloniex api
+  #   - raises 'poloniex.PoloniexError' if an api key or secret is missing
+  #     (and the command is 'private'), if the <command> is not valid, or
+  #       if an error is returned from poloniex.com
+  #   - returns decoded json api message """
+  def self.call(command, args = {})
+    # Get command type
+    cmd_type = self.check_command(command)
+
+    # Pass the command
+    args['command'] = command
+    payload = {}
+    payload['timeout'] = self.timeout
+
+    # private?
+    if cmd_type == 'Private'
+      payload['uri'] = PRIVATE_API_BASE
+
+      # Set nonce
+      args['nonce'] = self.nonce
+
+      # Add args to payload
+      payload['data'] = args
+
+      # Sign data with secret key
+      sign = OpenSSL::HMAC.digest(
+          OpenSSL::HMAC.digest.new(SHA512),
+          self.secret.encode(UTF_8),
+          urlencode(args).encode(UTF_8)
+      )
+
+      # Add headers to payload
+      payload['headers'] = {
+          'Sign' => sign,
+          'Key' => self.key
+      }
+
+      # Send the call
+      # FIXME
+      ret = _post(payload)
+
+      # Return the data
+      return self.handle_returned(ret.text)
+    end
+    if cmd_type == 'Public'
+
+      # Encode URL
+      payload['url'] = PUBLIC_API_BASE + URI.encode_www.form(args)
+
+      # Send the call
+      # FIXME
+      ret = _get(payload['url'])
+
+      return self.handle_returned(ret.text)
+    end
+  end
+
   # Returns if the command is private of public, raises PoloniexError
   #   if command is not found
   def self.check_command(command)
@@ -87,9 +154,9 @@ class Poloniex
   def self.handle_returned(data)
     begin
       unless self.json_nums
-        out = loads(data)
+        out = JSON.parse(data)
       else
-        out = loads(data, parse_float = self.json_nums, parse_int = self.json_nums)
+        out = JSON.parse(data, parse_float = self.json_nums, parse_int = self.json_nums)
       end
     rescue
       self.logger.error(data)
@@ -189,7 +256,7 @@ class Poloniex
         'currency' => currency.to_s.upcase
     })
   end
-  
+
   private
 
     # Increments the nonce
@@ -197,8 +264,22 @@ class Poloniex
       self._nonce += 42
     end
 
+    # Gets the current time as float
+    #   example: 1503853685.5080986
     def time
       Time.now.to_f
+    end
+
+    # TODO utilize path and port
+    def _get(uri, path = nil, port = nil)
+      address = URI.parse(uri)
+      Net::HTTP.get_response(address)
+    end
+
+    # TODO map more closely to canonical post
+    def _post(url, data = {}, initheader = nil, dest = nil)
+      address = URI.parse(url)
+      Net::HTTP.post_form(address, data)
     end
 
 end
