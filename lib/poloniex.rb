@@ -261,9 +261,10 @@ module Poloniex
     # Returns the list of loan offers and demands for a given currency,
     #  specified by the "currency" parameter
     def return_loan_orders(currency)
-      self.call('returnLoanOrders', {
+      args = {
           'currency' => currency.to_s.upcase
-      })
+      }
+      self.call('returnLoanOrders', args )
     end
 
     # PRIVATE COMMANDS
