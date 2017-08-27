@@ -2,8 +2,6 @@
 # https://github.com/brianmcmichael/poloniex_api
 # BTC: 1Azh1Sn3nzHE5RMnx8dQnJ4dkWAxFbUWEg
 
-require 'poloniex/exceptions'
-
 require 'net/http'
 require 'json'
 require 'logger'
@@ -15,7 +13,7 @@ module Poloniex
 
   RETRY_DELAYS = [0, 2, 5, 30]
 
-# Possible Commands
+  # Possible Commands
   PUBLIC_COMMANDS = %w(returnTicker return24hVolume returnOrderBook marketTradeHist returnChartData returnCurrencies returnLoanOrders)
 
   PRIVATE_COMMANDS = %w(returnBalances returnCompleteBalances returnDepositAddresses generateNewAddress returnDepositsWithdrawals returnOpenOrders returnTradeHistory returnAvailableAccountBalances returnTradableBalances returnOpenLoanOffers returnOrderTrades returnActiveLoans returnLendingHistory createLoanOffer cancelLoanOffer toggleAutoRenew buy sell cancelOrder moveOrder withdraw returnFeeInfo transferBalance returnMarginAccountSummary marginBuy marginSell getMarginPosition closeMarginPosition)
@@ -69,7 +67,7 @@ module Poloniex
         rescue RequestException => problem
           problems.push problem
           if delay == RETRY_DELAYS.last
-            raise RetryException "Retry delays exhausted #{problem}"
+            raise Poloniex::RetryException.new "Retry delays exhausted #{problem}"
           end
         end
         if problems.any?
@@ -141,14 +139,14 @@ module Poloniex
       if PRIVATE_COMMANDS.include? command
         # Check for keys
         unless self.key && self.secret
-          raise PoloniexError "An API key and Secret Key are required!"
+          raise Poloniex::PoloniexError.new "An API key and Secret Key are required!"
         end
         return "Private"
       end
       if PUBLIC_COMMANDS.include? command
         return 'Public'
       end
-      raise PoloniexError "Invalid command: #{command}"
+      raise Poloniex::PoloniexError.new "Invalid command: #{command}"
     end
 
     # Handles the returned data from Poloniex
@@ -161,7 +159,7 @@ module Poloniex
         end
       rescue
         self.logger.error(data)
-        raise PoloniexError "Invalid json response returned!"
+        raise Poloniex::PoloniexError.new "Invalid json response returned!"
       end
 
       if out.include? 'error'
@@ -178,7 +176,7 @@ module Poloniex
           raise RequestException("PoloniexError #{out['error']}")
         end
 
-        raise PoloniexError(out['error'])
+        raise Poloniex::PoloniexError.new(out['error'])
       end
       return out
     end
@@ -229,7 +227,7 @@ module Poloniex
     #  _end='now')
     def return_chart_data(currency_pair, period: false, _start: false, _end: false)
       unless [300, 900, 1800, 7200, 14400, 86400].include? period
-        raise PoloniexError("#{period.to_s} invalid candle period")
+        raise Poloniex::PoloniexError.new("#{period.to_s} invalid candle period")
       end
 
       unless _start
@@ -354,7 +352,7 @@ module Poloniex
       if order_type
         # Check type
         unless POSITION_TYPES.include? order_type
-          raise PoloniexError('Invalid order type.')
+          raise Poloniex::PoloniexError.new('Invalid order type.')
         end
         args[order_type] = 1
       end
@@ -372,7 +370,7 @@ module Poloniex
       # Order type specified?
       if order_type
         unless POSITION_TYPES.include? order_type
-          raise PoloniexError('Invalid order type.')
+          raise Poloniex::PoloniexError.new('Invalid order type.')
         end
         args[order_type] = 1
       end
@@ -405,7 +403,7 @@ module Poloniex
       # Order type specified?
       if order_type
         unless POSITION_TYPES[1,2].include? order_type
-          raise PoloniexError("Invalid order type #{order_type.to_s}")
+          raise Poloniex::PoloniexError.new("Invalid order type #{order_type.to_s}")
         end
         args[order_type] = 1
       end
@@ -629,3 +627,4 @@ module Poloniex
 
 end
 
+require 'poloniex/exceptions'

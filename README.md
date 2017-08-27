@@ -18,6 +18,13 @@ Require the gem in your application
 require 'poloniex'
 ```
 
+Basic Usage
+
+```
+poloniex = Poloniex::API.new
+```
+
+
 Initialize a new object with your API key, Secret Key, and timeout in seconds.
 
 ```
