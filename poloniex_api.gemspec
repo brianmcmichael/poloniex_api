@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'poloniex_api'
-  s.version     = '0.0.0'
+  s.version     = Poloniex::VERSION
   s.date        = '2017-08-27'
   s.summary     = "Poloniex API Wrapper"
   s.description = "An api wrapper for Poloniex, based on python API"
