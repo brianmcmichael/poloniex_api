@@ -1,5 +1,9 @@
 # Poloniex API Wrapper - Ruby Edition
 
+Ported from [this](https://github.com/s4w3d0ff/python-poloniex) wrapper written by 's4w3d0ff'
+
+> I (brianmcmichael) am not affiliated with, nor paid by Poloniex. If you wish to contribute to this repository please read CONTRIBUTING.md. All and any help is appreciated.
+
 ## Getting Started
 
 Add the Api wrapper to your `Gemfile`
