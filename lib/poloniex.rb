@@ -197,7 +197,11 @@ module Poloniex
     #   number for use with the Push API and an indicator specifying whether the
     #   market is frozen. (defaults to 'all' markets, at a 'depth' of 20 orders)
     def return_order_book(currency_pair='all', depth=20)
-      return self.call('returnOrderBook', { currency_pair: currency_pair.to_s.upcase, depth: depth.to_s })
+      args = {
+          'currencyPair' => currency_pair.to_s.upcase,
+          'depth' => depth.to_s
+      }
+      return self.call('returnOrderBook', args)
     end
 
     # Returns the past 200 trades for a given market, or up to 50,000
