@@ -15,6 +15,6 @@ Gem::Specification.new do |s|
   s.files       = ["lib/poloniex.rb", "lib/poloniex/exceptions.rb"]
   s.homepage    =
       'http://rubygems.org/gems/poloniex_api'
-  s.license       = 'MIT'
+  s.license       = 'GPLv2'
 end
 
