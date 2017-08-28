@@ -458,6 +458,7 @@ module Poloniex
 
       # Order type specified?
       if order_type
+        # 'immediateOrCancel', 'postOnly'
         unless POSITION_TYPES[1,2].include? order_type
           raise Poloniex::PoloniexError.new("Invalid order type #{order_type.to_s}")
         end
@@ -472,6 +473,8 @@ module Poloniex
     #  must be enabled for your API key. Required parameters are
     #  "currency", "amount", and "address". For XMR withdrawals, you may
     # optionally specify "paymentId".
+    #
+    # TODO: UNTESTED
     def withdraw(currency, amount, address, payment_id = false)
       args = {
           'currency' => currency.to_s.upcase,
@@ -499,7 +502,10 @@ module Poloniex
     #  be accessible if you have any open margin positions or orders.
     def return_available_account_balances(account = false)
       if account
-        return self.call('returnAvailableAccountBalances', { 'account' => account })
+        args = {
+            'account' => account.to_s.upcase
+        }
+        return self.call('returnAvailableAccountBalances', args)
       else
         return self.call('returnAvailableAccountBalances')
       end
@@ -509,7 +515,7 @@ module Poloniex
     #  market for which margin trading is enabled. Please note that these
     #  balances may vary continually with market conditions.
     def return_tradable_balances
-      return self.call('returnTradeableBalances')
+      return self.call('returnTradableBalances')
     end
 
     # Transfers funds from one account to another (e.g. from your
@@ -541,6 +547,8 @@ module Poloniex
     #  maximum lending rate using the "lendingRate" parameter (defaults to 2).
     #  If successful, the method will return the order number and any trades
     #  immediately resulting from your order.
+    #
+    # TODO: UNTESTED
     def margin_buy(currency_pair, rate, amount, lending_rate = 2)
       args = {
           'currencyPair' => currency_pair.to_s.upcase,
@@ -627,7 +635,7 @@ module Poloniex
     #  months history)
     def return_lending_history(_start = false, _end = false, limit = false)
       unless _start
-        _start = Time.now.to_i - self.MONTH
+        _start = Time.now.to_i - Poloniex::MONTH
       end
       unless _end
         _end = Time.now.to_i
@@ -664,7 +672,7 @@ module Poloniex
     # Gets the current time-based nonce
     #   example: 15038536855080986
     def nonce_time
-      "#{Time.now.to_f}".gsub('.', '').to_i
+      "#{'%.6f' % Time.now.to_f}".gsub('.', '').to_i
     end
 
     # TODO utilize path and port
