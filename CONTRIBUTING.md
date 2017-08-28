@@ -19,3 +19,7 @@
   You can simply star/fork [this repository at github.com](https://github.com/brianmcmichael/poloniex_api), and/or donate to the following:
 
   BTC: `1Azh1Sn3nzHE5RMnx8dQnJ4dkWAxFbUWEg`
+  
+  ETH/Tokens: `0x7e2185544f095230ba86915E5BfF498653A90A66`
+  
+  Waves: `3P6FDphVYMEgy6ts4o8HLgRDUKoyRnMDJ9y`
