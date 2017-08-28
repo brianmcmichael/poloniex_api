@@ -6,8 +6,8 @@ require 'net/http'
 require 'json'
 require 'logger'
 require 'uri'
-require 'openssl'
 require 'base64'
+require 'digest'
 
 module Poloniex
 
@@ -47,11 +47,19 @@ module Poloniex
       self.logger = Logger.new(STDOUT)
 
       # create nonce
-      self._nonce = "#{time}".gsub('.', '')
+      self._nonce = time
       self.json_nums = json_nums
       self.key = key
       self.secret = secret
       self.timeout = timeout
+    end
+
+    def key(key)
+      self.key = key
+    end
+
+    def secret(secret)
+      self.secret = secret
     end
 
     # FIXME make this a decorator
@@ -101,25 +109,27 @@ module Poloniex
         # Add args to payload
         payload['data'] = args
 
+        digest = Digest::SHA512
         # Sign data with secret key
-        sign = OpenSSL::HMAC.digest(
-            OpenSSL::HMAC.digest.new(SHA512),
+        sign = Digest::HMAC.hexdigest(
+            URI.encode_www_form(args).encode(UTF_8),
             self.secret.encode(UTF_8),
-            urlencode(args).encode(UTF_8)
+            digest
         )
 
         # Add headers to payload
         payload['headers'] = {
+            'Content-Type' => 'application/x-www-form-urlencoded',
             'Sign' => sign,
             'Key' => self.key
         }
 
         # Send the call
         # FIXME
-        ret = _post(payload)
+        ret = _post(PRIVATE_API_BASE, args, payload['headers'])
 
         # Return the data
-        return self.handle_returned(ret.text)
+        return self.handle_returned(ret.body)
       end
       if cmd_type == 'Public'
 
@@ -141,7 +151,7 @@ module Poloniex
         unless self.key && self.secret
           raise Poloniex::PoloniexError.new "An API key and Secret Key are required!"
         end
-        return "Private"
+        return 'Private'
       end
       if PUBLIC_COMMANDS.include? command
         return 'Public'
@@ -279,7 +289,10 @@ module Poloniex
     #  this call is limited to your exchange account; set the "account"
     #  parameter to "all" to include your margin and lending accounts.
     def return_complete_balances(account = 'all')
-      return self.call('returnCompleteBalance', { 'account' => account.to_s })
+      args = {
+          'account' => account.to_s
+      }
+      return self.call('returnCompleteBalances', args)
     end
 
     # Returns all of your deposit addresses.
@@ -616,11 +629,10 @@ module Poloniex
       self._nonce += 42
     end
 
-    # Gets the current time as float
-    #   example: 1503853685.5080986
+    # Gets the current time-based nonce
+    #   example: 15038536855080986
     def time
-      #Time.now.to_f
-      Time.now.to_i
+      "#{Time.now.to_f}".gsub('.', '').to_i
     end
 
     # TODO utilize path and port
@@ -629,10 +641,19 @@ module Poloniex
       Net::HTTP.get(address)
     end
 
-    # TODO map more closely to canonical post
     def _post(url, data = {}, initheader = nil, dest = nil)
       address = URI.parse(url)
-      Net::HTTP.post_form(address, data)
+      form_data = data
+      headers = initheader
+
+      http = Net::HTTP.new(address.host, address.port)
+      http.use_ssl = true
+
+      request = Net::HTTP::Post.new(address.request_uri, headers)
+      request.body = URI.encode_www_form(form_data).encode(UTF_8)
+
+      response = http.request(request)
+      response
     end
 
   end

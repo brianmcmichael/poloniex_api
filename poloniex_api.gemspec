@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
   s.version        = Poloniex::VERSION
   s.date           = '2017-08-27'
   s.summary        = "Poloniex API Wrapper"
-  s.description    = "An API wrapper for Poloniex, built in Ruby"
+  s.description    = "Poloniex API wrapper for Ruby 2.1.5+"
   s.authors        = ["Brian McMichael"]
   s.email          = 'brian@brianmcmichael.com'
   s.files          = `git ls-files`.split("\n")
