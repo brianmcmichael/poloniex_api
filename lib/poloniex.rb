@@ -55,6 +55,7 @@ module Poloniex
 
 # The Poloniex Object
   class API
+    attr_accessor :key, :secret
 
     # @param [String] key api key supplied by Poloniex
     # @param [String] secret hash supplied by Poloniex
@@ -70,14 +71,6 @@ module Poloniex
       self.key = key
       self.secret = secret
       self.timeout = timeout
-    end
-
-    def key(key)
-      self.key = key
-    end
-
-    def secret(secret)
-      self.secret = secret
     end
 
     # FIXME make this a decorator
@@ -131,7 +124,7 @@ module Poloniex
         # Sign data with secret key
         sign = Digest::HMAC.hexdigest(
             URI.encode_www_form(args).encode(UTF_8),
-            self.secret.encode(UTF_8),
+            secret.encode(UTF_8),
             digest
         )
 
@@ -139,7 +132,7 @@ module Poloniex
         payload['headers'] = {
             'Content-Type' => 'application/x-www-form-urlencoded',
             'Sign' => sign,
-            'Key' => self.key
+            'Key' => key
         }
 
         # Send the call
@@ -662,7 +655,7 @@ module Poloniex
 
     protected
 
-    attr_accessor :logger, :_nonce, :json_nums, :key, :secret, :timeout
+    attr_accessor :logger, :_nonce, :json_nums, :timeout
 
     # Increments the nonce
     def nonce
