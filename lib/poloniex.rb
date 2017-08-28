@@ -1,5 +1,7 @@
 # Poloniex API wrapper for Ruby 2.1.5+
+#
 # https://github.com/brianmcmichael/poloniex_api
+#
 # BTC: 1Azh1Sn3nzHE5RMnx8dQnJ4dkWAxFbUWEg
 # ETH/Tokens: 0x7e2185544f095230ba86915E5BfF498653A90A66
 # Waves: 3P6FDphVYMEgy6ts4o8HLgRDUKoyRnMDJ9y
@@ -19,6 +21,14 @@
 #    You should have received a copy of the GNU General Public License along
 #    with this program; if not, write to the Free Software Foundation, Inc.,
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+
+# TODO
+# [ ] Add retries functionality
+# [ ] Test withdraw method
+# [ ] Add examples
+# [ ] Add test suite
+# [ ] Add websockets support
 
 require 'net/http'
 require 'json'
