@@ -26,7 +26,12 @@
 # TODO
 # [ ] Add retries functionality
 # [ ] Test withdraw method
+# [ ] Test margin_buy method
+# [ ] Better mapping of _get method
+# [ ] Clean up the post request
+# [ ] Refactor market_trade_hist
 # [ ] Add examples
+# [ ] Convert responses to objects
 # [ ] Add test suite
 # [ ] Add websockets support
 
