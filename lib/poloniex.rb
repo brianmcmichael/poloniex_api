@@ -65,7 +65,7 @@ module Poloniex
       self.logger = Logger.new(STDOUT)
 
       # create nonce
-      self._nonce = time
+      self._nonce = nonce_time
       self.json_nums = json_nums
       self.key = key
       self.secret = secret
@@ -90,7 +90,7 @@ module Poloniex
         begin
           # attempt call
           return func(*args, **kwargs)
-        rescue RequestException => problem
+        rescue Poloniex::RequestException.new => problem
           problems.push problem
           if delay == RETRY_DELAYS.last
             raise Poloniex::RetryException.new "Retry delays exhausted #{problem}"
@@ -196,12 +196,12 @@ module Poloniex
         if out['error'].include? "Nonce must be greater"
           nonce
           # raise RequestException so we try again
-          raise RequestException("PoloniexError #{out['error']}")
+          raise Poloniex::RequestException.new("PoloniexError #{out['error']}")
         end
 
         if out['error'].downcase.include? "please try again"
           # Raise RequestException so we try again
-          raise RequestException("PoloniexError #{out['error']}")
+          raise Poloniex::RequestException.new("PoloniexError #{out['error']}")
         end
 
         raise Poloniex::PoloniexError.new(out['error'])
@@ -267,10 +267,10 @@ module Poloniex
       end
 
       unless _start
-        _start = time - DAY
+        _start = Time.now.to_i - DAY
       end
       unless _end
-        _end = time
+        _end = Time.now.to_i
       end
       args = {
           'currencyPair' => currency_pair.to_s.upcase,
@@ -322,7 +322,7 @@ module Poloniex
     #   "currency" parameter.
     def generate_new_address(currency)
       args = {
-          'currency' => currency
+          'currency' => currency.to_s.upcase
       }
       return self.call('generateNewAddress', args)
     end
@@ -332,10 +332,10 @@ module Poloniex
     #  given as UNIX timestamps. (defaults to 1 month)
     def return_deposits_withdrawals(_start = false, _end = false)
       unless _start
-        _start = time - MONTH
+        _start = Time.now.to_i - MONTH
       end
       unless _end
-        _end = time
+        _end = Time.now.to_i
       end
       args = {
           'start' => _start.to_s,
@@ -349,7 +349,10 @@ module Poloniex
     #  "currencyPair" parameter, e.g. "BTC_XCP". Set "currencyPair" to
     #  "all" to return open orders for all markets.
     def return_open_orders(currency_pair = 'all')
-      return self.call('returnOpenOrders', currency_pair.to_s.upcase)
+      args = {
+          'currencyPair' => currency_pair.to_s.upcase
+      }
+      return self.call('returnOpenOrders', args)
     end
 
     #Returns your trade history for a given market, specified by the
@@ -359,7 +362,9 @@ module Poloniex
     #  timestamp format; if you do not specify a range, it will be limited to
     #  one day.
     def return_trade_history(currency_pair = 'all', _start = false, _end = false)
-      args = { 'currencyPair' => currency_pair.to_s.upcase }
+      args = {
+          'currencyPair' => currency_pair.to_s.upcase
+      }
       if _start
         args['start'] = _start
       end
@@ -374,7 +379,10 @@ module Poloniex
     #  or you specify an order that does not belong to you, you will receive
     #  an error.
     def return_order_trades(order_number)
-      return self.call('returnOrderTrades', { 'orderNumber' => order_number.to_s })
+      args = {
+          'orderNumber' => order_number.to_s
+      }
+      return self.call('returnOrderTrades', args)
     end
 
     # Places a limit buy order in a given market. Required parameters are
@@ -426,7 +434,10 @@ module Poloniex
     # Cancels an order you have placed in a given market. Required
     #  parameter is "order_number".
     def cancel_order(order_number)
-      return self.call('cancelOrder', { 'orderNumber' => order_number.to_s })
+      args = {
+          'orderNumber' => order_number.to_s
+      }
+      return self.call('cancelOrder', args)
     end
 
     # Cancels an order and places a new one of the same type in a single
@@ -616,10 +627,10 @@ module Poloniex
     #  months history)
     def return_lending_history(_start = false, _end = false, limit = false)
       unless _start
-        _start = time - self.MONTH
+        _start = Time.now.to_i - self.MONTH
       end
       unless _end
-        _end = time
+        _end = Time.now.to_i
       end
       args = {
           'start' => _start.to_s,
@@ -652,7 +663,7 @@ module Poloniex
 
     # Gets the current time-based nonce
     #   example: 15038536855080986
-    def time
+    def nonce_time
       "#{Time.now.to_f}".gsub('.', '').to_i
     end
 
