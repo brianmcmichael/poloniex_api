@@ -24,10 +24,8 @@
 
 
 # TODO
-# [ ] Add retries functionality
 # [ ] Test withdraw method
 # [ ] Test margin_buy method
-# [ ] Better mapping of _get method
 # [ ] Clean up the post request
 # [ ] Refactor market_trade_hist
 # [ ] Add examples
@@ -41,6 +39,7 @@ require 'logger'
 require 'uri'
 require 'base64'
 require 'digest'
+require 'timeout'
 
 module Poloniex
 
@@ -75,9 +74,8 @@ module Poloniex
     # @param [String] key api key supplied by Poloniex
     # @param [String] secret hash supplied by Poloniex
     # @param [int] timeout time in sec to wait for an api response
-    #   (otherwise 'requests.exceptions.Timeout' is raised)
     # @param [datatype] json_nums to use when parsing json ints and floats
-    def initialize(key = false, secret = false, timeout = nil, json_nums = false)
+    def initialize(key = false, secret = false, timeout = 3, json_nums = false)
       self.logger = Logger.new(STDOUT)
 
       # create nonce
@@ -138,7 +136,7 @@ module Poloniex
 
             # Return the data
             return self.handle_returned(ret.body)
-          rescue Poloniex::RequestException.new => problem
+          rescue Poloniex::RequestException => problem
             problems.push problem
             if delay == RETRY_DELAYS.last
               raise Poloniex::RetryException.new "Retry delays exhausted #{problem}"
@@ -147,7 +145,11 @@ module Poloniex
               LOGGER.info("-- delaying for #{delay} seconds")
               sleep(delay)
             end
+          rescue => e
+            puts e
           end
+
+
         end
       end
       if cmd_type == 'Public'
@@ -161,7 +163,7 @@ module Poloniex
             ret = _get(payload['url'])
 
             return self.handle_returned(ret)
-          rescue Poloniex::RequestException.new => problem
+          rescue Poloniex::RequestException => problem
             problems.push problem
             if delay == RETRY_DELAYS.last
               raise Poloniex::RetryException.new "Retry delays exhausted #{problem}"
@@ -249,11 +251,8 @@ module Poloniex
     # Returns the past 200 trades for a given market, or up to 50,000
     # trades between a range specified in UNIX timestamps by the "start" and
     # "end" parameters.
-    #
-    # FIXME: Why is this performing it's own GET? Can this use self.call()?
     def market_trade_hist(currency_pair, _start: false, _end: false)
-      args =  {
-          "command" => 'returnTradeHistory',
+      args = {
           "currencyPair" => currency_pair.to_s.upcase
       }
       if _start
@@ -262,11 +261,8 @@ module Poloniex
       if _end
         args['end'] = _end
       end
-      url = URI.parse(PUBLIC_API_BASE)
-      url.query = URI.encode_www_form(args)
-      ret = _get(url.to_s, timeout: self.timeout)
 
-      self.handle_returned(ret)
+      self.call('returnTradeHistory', args)
     end
 
     # Returns candlestick chart data. Parameters are "currencyPair",
@@ -689,14 +685,22 @@ module Poloniex
       "#{'%.6f' % Time.now.to_f}".gsub('.', '').to_i
     end
 
-    # TODO utilize path and port
-    def _get(uri, path = nil, port = nil)
-      address = URI.parse(uri)
-      Net::HTTP.get(address)
+    # Perform the HTTP GET
+    def _get(path)
+      address = URI.parse(path)
+      begin
+        Timeout::timeout(self.timeout) {
+          Net::HTTP.get(address)
+        }
+      rescue Timeout::Error
+        raise Poloniex::RequestException.new "Request took longer than #{self.timeout} seconds!"
+      end
+
     end
 
-    def _post(url, data = {}, initheader = nil, dest = nil)
-      address = URI.parse(url)
+    # Perform the HTTP POST
+    def _post(path, data = {}, initheader = nil, dest = nil)
+      address = URI.parse(path)
       form_data = data
       headers = initheader
 
@@ -704,10 +708,17 @@ module Poloniex
       http.use_ssl = true
 
       request = Net::HTTP::Post.new(address.request_uri, headers)
+
       request.body = URI.encode_www_form(form_data).encode(UTF_8)
 
-      response = http.request(request)
-      response
+      begin
+        Timeout::timeout(self.timeout) {
+          http.request(request)
+        }
+      rescue Timeout::Error
+        raise Poloniex::RequestException.new "Request took longer than #{self.timeout} seconds!"
+      end
+
     end
 
   end
