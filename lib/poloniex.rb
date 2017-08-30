@@ -38,8 +38,8 @@ require 'json'
 require 'logger'
 require 'uri'
 require 'base64'
-require 'digest'
 require 'timeout'
+require 'openssl'
 
 module Poloniex
 
