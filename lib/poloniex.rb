@@ -44,7 +44,7 @@ require 'digest'
 
 module Poloniex
 
-  RETRY_DELAYS = [0, 2, 5, 30]
+  RETRY_DELAYS = [0, 2, 5, 30, nil]
 
   # Possible Commands
   PUBLIC_COMMANDS = %w(returnTicker return24hVolume returnOrderBook marketTradeHist returnChartData returnCurrencies returnLoanOrders)
@@ -88,28 +88,6 @@ module Poloniex
       self.timeout = timeout
     end
 
-    # FIXME make this a decorator
-    def retry(func)
-    end
-
-    def retrying(*args, **kwargs)
-      problems = []
-      RETRY_DELAYS.each do |delay|
-        begin
-          # attempt call
-          return func(*args, **kwargs)
-        rescue Poloniex::RequestException.new => problem
-          problems.push problem
-          if delay == RETRY_DELAYS.last
-            raise Poloniex::RetryException.new "Retry delays exhausted #{problem}"
-          end
-        end
-        if problems.any?
-          LOGGER.debug problems.join("\n")
-        end
-      end
-    end
-
     # """ Main Api Function
     #   - encodes and sends <command> with optional [args] to Poloniex api
     #   - raises 'poloniex.PoloniexError' if an api key or secret is missing
@@ -119,6 +97,8 @@ module Poloniex
     def call(command, args = {})
       # Get command type
       cmd_type = self.check_command(command)
+
+      problems = []
 
       # Pass the command
       args['command'] = command
@@ -150,22 +130,48 @@ module Poloniex
             'Key' => key
         }
 
-        # Send the call
-        # FIXME
-        ret = _post(PRIVATE_API_BASE, args, payload['headers'])
+        RETRY_DELAYS.each do |delay|
+          begin
+            # attempt call
+            # Send the call
+            ret = _post(PRIVATE_API_BASE, args, payload['headers'])
 
-        # Return the data
-        return self.handle_returned(ret.body)
+            # Return the data
+            return self.handle_returned(ret.body)
+          rescue Poloniex::RequestException.new => problem
+            problems.push problem
+            if delay == RETRY_DELAYS.last
+              raise Poloniex::RetryException.new "Retry delays exhausted #{problem}"
+            else
+              LOGGER.debug(problem)
+              LOGGER.info("-- delaying for #{delay} seconds")
+              sleep(delay)
+            end
+          end
+        end
       end
       if cmd_type == 'Public'
 
         # Encode URL
         payload['url'] = PUBLIC_API_BASE + URI.encode_www_form(args)
 
-        # Send the call
-        ret = _get(payload['url'])
+        RETRY_DELAYS.each do |delay|
+          begin
+            # Send the call
+            ret = _get(payload['url'])
 
-        return self.handle_returned(ret)
+            return self.handle_returned(ret)
+          rescue Poloniex::RequestException.new => problem
+            problems.push problem
+            if delay == RETRY_DELAYS.last
+              raise Poloniex::RetryException.new "Retry delays exhausted #{problem}"
+            else
+              LOGGER.debug(problem)
+              LOGGER.info("-- delaying for #{delay} seconds")
+              sleep(delay)
+            end
+          end
+        end
       end
     end
 
