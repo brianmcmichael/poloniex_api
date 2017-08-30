@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Fixed logger calls on timeouts
+- Replaced `Digest::HMAC` with `OpenSSL::HMAC` for Ruby 2.2+ support
 
 ## [0.0.2] - 2017-08-29
 
