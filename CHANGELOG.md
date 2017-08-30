@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.0.3] - 2017-08-30
 
 ### Changed
 - Fixed logger calls on timeouts
@@ -22,3 +22,4 @@ All notable changes to this project will be documented in this file.
 
 [Unreleased]: https://github.com/brianmcmichael/poloniex_api/compare/v0.0.2...HEAD
 [0.0.2]: https://github.com/brianmcmichael/poloniex_api/compare/v0.0.1...v0.0.2
+[0.0.3]: https://github.com/brianmcmichael/poloniex_api/compare/v0.0.2...v0.0.3
