@@ -93,6 +93,7 @@ module Poloniex
     #       if an error is returned from poloniex.com
     #   - returns decoded json api message """
     def call(command, args = {})
+      puts command
       # Get command type
       cmd_type = self.check_command(command)
 
@@ -113,12 +114,12 @@ module Poloniex
         # Add args to payload
         payload['data'] = args
 
-        digest = Digest::SHA512
+        digest = OpenSSL::Digest.new(SHA512)
         # Sign data with secret key
-        sign = Digest::HMAC.hexdigest(
-            URI.encode_www_form(args).encode(UTF_8),
-            secret.encode(UTF_8),
-            digest
+        sign = OpenSSL::HMAC.hexdigest(
+                                digest,
+                                secret.encode(UTF_8),
+                                URI.encode_www_form(args).encode(UTF_8)
         )
 
         # Add headers to payload
