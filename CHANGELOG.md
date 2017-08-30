@@ -3,6 +3,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- Fixed logger calls on timeouts
+
 ## [0.0.2] - 2017-08-29
 
 ### Added

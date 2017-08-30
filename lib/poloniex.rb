@@ -141,12 +141,10 @@ module Poloniex
             if delay == RETRY_DELAYS.last
               raise Poloniex::RetryException.new "Retry delays exhausted #{problem}"
             else
-              LOGGER.debug(problem)
-              LOGGER.info("-- delaying for #{delay} seconds")
+              self.logger.debug(problem)
+              self.logger.info("-- delaying for #{delay} seconds")
               sleep(delay)
             end
-          rescue => e
-            puts e
           end
 
 
@@ -168,8 +166,8 @@ module Poloniex
             if delay == RETRY_DELAYS.last
               raise Poloniex::RetryException.new "Retry delays exhausted #{problem}"
             else
-              LOGGER.debug(problem)
-              LOGGER.info("-- delaying for #{delay} seconds")
+              self.logger.debug(problem)
+              self.logger.info("-- delaying for #{delay} seconds")
               sleep(delay)
             end
           end
