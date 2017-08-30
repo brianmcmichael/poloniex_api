@@ -93,7 +93,6 @@ module Poloniex
     #       if an error is returned from poloniex.com
     #   - returns decoded json api message """
     def call(command, args = {})
-      puts command
       # Get command type
       cmd_type = self.check_command(command)
 
