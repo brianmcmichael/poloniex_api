@@ -108,7 +108,7 @@ module Poloniex
         payload['uri'] = PRIVATE_API_BASE
 
         # Set nonce
-        args['nonce'] = self.nonce
+        args['nonce'] = nonce
 
         # Add args to payload
         payload['data'] = args
