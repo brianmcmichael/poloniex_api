@@ -105,30 +105,32 @@ module Poloniex
 
       # private?
       if cmd_type == 'Private'
-        payload['uri'] = PRIVATE_API_BASE
 
-        # Set nonce
-        args['nonce'] = nonce
+        payload['uri'] = PRIVATE_API_BASE
 
         # Add args to payload
         payload['data'] = args
 
-        digest = OpenSSL::Digest.new(SHA512)
-        # Sign data with secret key
-        sign = OpenSSL::HMAC.hexdigest(
-                                digest,
-                                secret.encode(UTF_8),
-                                URI.encode_www_form(args).encode(UTF_8)
-        )
-
-        # Add headers to payload
-        payload['headers'] = {
-            'Content-Type' => 'application/x-www-form-urlencoded',
-            'Sign' => sign,
-            'Key' => key
-        }
-
         RETRY_DELAYS.each do |delay|
+
+          # Update nonce
+          args['nonce'] = self.nonce
+
+          digest = OpenSSL::Digest.new(SHA512)
+          # Sign data with secret key
+          sign = OpenSSL::HMAC.hexdigest(
+                                  digest,
+                                  secret.encode(UTF_8),
+                                  URI.encode_www_form(args).encode(UTF_8)
+          )
+
+          # Add headers to payload
+          payload['headers'] = {
+              'Content-Type' => 'application/x-www-form-urlencoded',
+              'Sign' => sign,
+              'Key' => key
+          }
+
           begin
             # attempt call
             # Send the call
