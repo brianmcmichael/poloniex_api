@@ -75,7 +75,7 @@ module Poloniex
     # @param [String] secret hash supplied by Poloniex
     # @param [int] timeout time in sec to wait for an api response
     # @param [datatype] json_nums to use when parsing json ints and floats
-    def initialize(key = false, secret = false, timeout = 3, json_nums = false)
+    def initialize(key = false, secret = false, timeout = 60, json_nums = false)
       self.logger = Logger.new(STDOUT)
 
       # create nonce
