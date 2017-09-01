@@ -28,10 +28,10 @@ poloniex = Poloniex::API.new
 ```
 
 
-Initialize a new object with your API key, Secret Key, and timeout in seconds.
+Initialize a new object with your API key, Secret Key, and (optional) timeout in seconds.
 
 ```
-poloniex = Poloniex::API.new('YOUR_API_KEY', 'YOUR_SECRET_KEY', 3)
+poloniex = Poloniex::API.new('YOUR_API_KEY', 'YOUR_SECRET_KEY')
 ```
 
 Get your API key [here](https://poloniex.com/apiKeys)
