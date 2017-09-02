@@ -3,6 +3,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- Change default timeout to 60 seconds
+
+## [0.0.6] - 2017-08-30
+
+### Changed
 - Ensure `nonce` is incremented prior to each request retry
 
 ## [0.0.5] - 2017-08-30
@@ -38,5 +44,6 @@ All notable changes to this project will be documented in this file.
 [0.0.3]: https://github.com/brianmcmichael/poloniex_api/compare/v0.0.2...v0.0.3
 [0.0.4]: https://github.com/brianmcmichael/poloniex_api/compare/v0.0.3...v0.0.4
 [0.0.5]: https://github.com/brianmcmichael/poloniex_api/compare/v0.0.4...v0.0.5
-[Unreleased]: https://github.com/brianmcmichael/poloniex_api/compare/v0.0.5...HEAD
+[0.0.6]: https://github.com/brianmcmichael/poloniex_api/compare/v0.0.5...v0.0.6
+[Unreleased]: https://github.com/brianmcmichael/poloniex_api/compare/v0.0.6...HEAD
 
