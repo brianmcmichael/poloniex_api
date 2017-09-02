@@ -26,13 +26,12 @@
 # TODO
 # [ ] Test withdraw method
 # [ ] Test margin_buy method
-# [ ] Clean up the post request
-# [ ] Refactor market_trade_hist
 # [ ] Add examples
 # [ ] Convert responses to objects
 # [ ] Add test suite
 # [ ] Add websockets support
 
+require 'poloniex/exceptions'
 require 'net/http'
 require 'json'
 require 'logger'
@@ -222,19 +221,19 @@ module Poloniex
 
         raise Poloniex::PoloniexError.new(out['error'])
       end
-      return out
+      out
     end
 
     # PUBLIC COMMANDS
 
     # Returns the ticker for all markets
     def return_ticker
-      return self.call('returnTicker')
+      self.call('returnTicker')
     end
 
     # Returns the 24-hour volume for all markets, plus totals for primary currencies.
     def return_24h_volume
-      return self.call('return24hVolume')
+      self.call('return24hVolume')
     end
 
     # Returns the order book for a given market as well as a sequence
@@ -245,48 +244,41 @@ module Poloniex
           'currencyPair' => currency_pair.to_s.upcase,
           'depth' => depth.to_s
       }
-      return self.call('returnOrderBook', args)
+      self.call('returnOrderBook', args)
     end
 
     # Returns the past 200 trades for a given market, or up to 50,000
     # trades between a range specified in UNIX timestamps by the "start" and
     # "end" parameters.
-    def market_trade_hist(currency_pair, _start: false, _end: false)
+    def market_trade_hist(currency_pair, start_range: false, end_range: false)
       args = {
           "currencyPair" => currency_pair.to_s.upcase
       }
-      if _start
-        args['start'] = _start
-      end
-      if _end
-        args['end'] = _end
-      end
+      args['start'] = start_range if start_range
+      args['end'] = end_range if end_range
 
       self.call('returnTradeHistory', args)
     end
 
     # Returns candlestick chart data. Parameters are "currencyPair",
     #  "period" (candlestick period in seconds; valid values are 300, 900,
-    #  1800, 7200, 14400, and 86400), "_start", and "_end". "Start" and "end"
+    #  1800, 7200, 14400, and 86400), "start_range", and "end_range". "Start" and "end"
     #  are given in UNIX timestamp format and used to specify the date range
-    #  for the data returned (default date range is _start='1 day ago' to
-    #  _end='now')
-    def return_chart_data(currency_pair, period: false, _start: false, _end: false)
+    #  for the data returned (default date range is start_range='1 day ago' to
+    #  end_range='now')
+    def return_chart_data(currency_pair, period: false, start_range: false, end_range: false)
       unless [300, 900, 1800, 7200, 14400, 86400].include? period
         raise Poloniex::PoloniexError.new("#{period.to_s} invalid candle period")
       end
 
-      unless _start
-        _start = Time.now.to_i - DAY
-      end
-      unless _end
-        _end = Time.now.to_i
-      end
+      start_range ||= Time.now.to_i - DAY
+      end_range ||= Time.now.to_i
+
       args = {
           'currencyPair' => currency_pair.to_s.upcase,
           'period' => period.to_s,
-          'start' => _start.to_s,
-          'end' => _end.to_s
+          'start' => start_range.to_s,
+          'end' => end_range.to_s
       }
       self.call('returnChartData', args)
     end
@@ -320,12 +312,12 @@ module Poloniex
       args = {
           'account' => account.to_s
       }
-      return self.call('returnCompleteBalances', args)
+      self.call('returnCompleteBalances', args)
     end
 
     # Returns all of your deposit addresses.
     def return_deposit_addresses
-      return self.call('returnDepositAddresses')
+      self.call('returnDepositAddresses')
     end
 
     # Generates a new deposit address for the currency specified by the
@@ -334,25 +326,20 @@ module Poloniex
       args = {
           'currency' => currency.to_s.upcase
       }
-      return self.call('generateNewAddress', args)
+      self.call('generateNewAddress', args)
     end
 
     # Returns your deposit and withdrawal history within a range,
-    #  specified by the "_start" and "_end" parameters, both of which should be
+    #  specified by the "start_range" and "end_range" parameters, both of which should be
     #  given as UNIX timestamps. (defaults to 1 month)
-    def return_deposits_withdrawals(_start = false, _end = false)
-      unless _start
-        _start = Time.now.to_i - MONTH
-      end
-      unless _end
-        _end = Time.now.to_i
-      end
+    def return_deposits_withdrawals(start_range = false, end_range = false)
+      start_range ||= Time.now.to_i - MONTH
+      end_range ||= Time.now.to_i
       args = {
-          'start' => _start.to_s,
-          'end' => _end.to_s
+          'start' => start_range.to_s,
+          'end' => end_range.to_s
       }
-
-      return self.call('returnDepositsWithdrawals', args)
+      self.call('returnDepositsWithdrawals', args)
     end
 
     # Returns your open orders for a given market, specified by the
@@ -362,7 +349,7 @@ module Poloniex
       args = {
           'currencyPair' => currency_pair.to_s.upcase
       }
-      return self.call('returnOpenOrders', args)
+      self.call('returnOpenOrders', args)
     end
 
     #Returns your trade history for a given market, specified by the
@@ -371,17 +358,15 @@ module Poloniex
     #  a range via "start" and/or "end" POST parameters, given in UNIX
     #  timestamp format; if you do not specify a range, it will be limited to
     #  one day.
-    def return_trade_history(currency_pair = 'all', _start = false, _end = false)
+    def return_trade_history(currency_pair = 'all', start_range = false, end_range = false)
       args = {
           'currencyPair' => currency_pair.to_s.upcase
       }
-      if _start
-        args['start'] = _start
-      end
-      if _end
-        args['end'] = _end
-      end
-      return self.call('returnTradeHistory', args)
+
+      args['start'] = start_range if start_range
+      args['end'] = end_range if end_range
+
+      self.call('returnTradeHistory', args)
     end
 
     # Returns all trades involving a given order, specified by the
@@ -392,7 +377,7 @@ module Poloniex
       args = {
           'orderNumber' => order_number.to_s
       }
-      return self.call('returnOrderTrades', args)
+      self.call('returnOrderTrades', args)
     end
 
     # Places a limit buy order in a given market. Required parameters are
@@ -419,7 +404,7 @@ module Poloniex
         end
         args[order_type] = 1
       end
-      return self.call('buy', args)
+      self.call('buy', args)
     end
 
     # Places a sell order in a given market. Parameters and output are
@@ -438,7 +423,7 @@ module Poloniex
         args[order_type] = 1
       end
 
-      return self.call('sell', args)
+      self.call('sell', args)
     end
 
     # Cancels an order you have placed in a given market. Required
@@ -447,7 +432,7 @@ module Poloniex
       args = {
           'orderNumber' => order_number.to_s
       }
-      return self.call('cancelOrder', args)
+      self.call('cancelOrder', args)
     end
 
     # Cancels an order and places a new one of the same type in a single
@@ -475,7 +460,7 @@ module Poloniex
         args[order_type] = 1
       end
 
-      return self.call('moveOrder', args)
+      self.call('moveOrder', args)
     end
 
     # Immediately places a withdrawal for a given currency, with no email
@@ -496,14 +481,14 @@ module Poloniex
         args['paymentId'] = payment_id.to_s
       end
 
-      return self.call('withdraw', args)
+      self.call('withdraw', args)
     end
 
     # If you are enrolled in the maker-taker fee schedule, returns your
     #  current trading fees and trailing 30-day volume in BTC. This
     #  information is updated once every 24 hours.
     def return_fee_info
-      return self.call('returnFeeInfo')
+      self.call('returnFeeInfo')
     end
 
     # Returns your balances sorted by account. You may optionally specify
@@ -515,9 +500,9 @@ module Poloniex
         args = {
             'account' => account.to_s.upcase
         }
-        return self.call('returnAvailableAccountBalances', args)
+        self.call('returnAvailableAccountBalances', args)
       else
-        return self.call('returnAvailableAccountBalances')
+        self.call('returnAvailableAccountBalances')
       end
     end
 
@@ -525,7 +510,7 @@ module Poloniex
     #  market for which margin trading is enabled. Please note that these
     #  balances may vary continually with market conditions.
     def return_tradable_balances
-      return self.call('returnTradableBalances')
+      self.call('returnTradableBalances')
     end
 
     # Transfers funds from one account to another (e.g. from your
@@ -542,14 +527,14 @@ module Poloniex
         args['confirmed'] = 1
       end
 
-      return self.call('transferBalance', args)
+      self.call('transferBalance', args)
     end
 
     # Returns a summary of your entire margin account. This is the same
     #  information you will find in the Margin Account section of the Margin
     #  Trading page, under the Markets list
     def return_margin_account_summary
-      return self.call('returnMarginAccountSummary')
+      self.call('returnMarginAccountSummary')
     end
 
     # Places a margin buy order in a given market. Required parameters are
@@ -566,7 +551,7 @@ module Poloniex
           'amount' => amount.to_s,
           'lendingRate' => lending_rate.to_s
       }
-      return self.call('marginBuy', args)
+      self.call('marginBuy', args)
     end
 
     # Places a margin sell order in a given market. Parameters and output
@@ -593,7 +578,7 @@ module Poloniex
       args = {
           'currencyPair' => currency_pair.to_s.upcase
       }
-      return self.call('getMarginPosition', args)
+      self.call('getMarginPosition', args)
     end
 
     # Closes your margin position in a given market (specified by the
@@ -604,7 +589,7 @@ module Poloniex
       args = {
           'currencyPair' => currency_pair.to_s_upcase
       }
-      return self.call('currencyPair', args)
+      self.call('currencyPair', args)
     end
 
     # Creates a loan offer for a given currency. Required parameters are
@@ -618,7 +603,7 @@ module Poloniex
           'autoRenew' => auto_renew.to_s,
           'lendingRate' => lending_rate.to_s
       }
-      return self.call('createLoanOffer', args)
+      self.call('createLoanOffer', args)
     end
 
     # Cancels a loan offer specified by the "orderNumber" parameter.
@@ -626,38 +611,35 @@ module Poloniex
       args = {
           'orderNumber' => order_number.to_s
       }
-      return self.call('cancelLoanOffer', args)
+      self.call('cancelLoanOffer', args)
     end
 
     # Returns your open loan offers for each currency.
     def return_open_loan_offers
-      return self.call('returnOpenLoanOffers')
+      self.call('returnOpenLoanOffers')
     end
 
     # Returns your active loans for each currency.
     def return_active_loans
-      return self.call('returnActiveLoans')
+      self.call('returnActiveLoans')
     end
 
     # Returns your lending history within a time range specified by the
     #  "start" and "end" parameters as UNIX timestamps. "limit" may also
     #  be specified to limit the number of rows returned. (defaults to the last
     #  months history)
-    def return_lending_history(_start = false, _end = false, limit = false)
-      unless _start
-        _start = Time.now.to_i - Poloniex::MONTH
-      end
-      unless _end
-        _end = Time.now.to_i
-      end
+    def return_lending_history(start_range = false, end_range = false, limit = false)
+
+      start_range ||= Time.now.to_i - Poloniex::MONTH
+      end_range ||= Time.now.to_i
+
       args = {
-          'start' => _start.to_s,
-          'end' => _end.to_s
+          'start' => start_range.to_s,
+          'end' => end_range.to_s
       }
-      if limit
-        args['limit'] = limit.to_s
-      end
-      return self.call('returnLendingHistory', args)
+      args['limit'] = limit.to_s if limit
+
+      self.call('returnLendingHistory', args)
     end
 
     # Toggles the autoRenew setting on an active loan, specified by the
@@ -725,4 +707,4 @@ module Poloniex
 
 end
 
-require 'poloniex/exceptions'
+
